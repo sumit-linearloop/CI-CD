@@ -50,7 +50,12 @@ jobs:
         env:
           DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}  # Your SSH key for the droplet
         run: |
-          ssh -o StrictHostKeyChecking=no -i $DROPLET_SSH_KEY root@${{ env.DROPLET_IP }} << 'EOF'
+          # Create a temporary SSH key file
+          echo "${{ env.DROPLET_SSH_KEY }}" > /tmp/droplet_key
+          chmod 600 /tmp/droplet_key  # Set the correct permissions
+
+          # Connect to the DigitalOcean droplet
+          ssh -o StrictHostKeyChecking=no -i /tmp/droplet_key root@${{ env.DROPLET_IP }} << 'EOF'
             # Pull the latest Docker image
             docker pull ${{ env.DOCKER_USERNAME }}/sumit-api:latest
             
@@ -64,3 +69,7 @@ jobs:
             # Optionally, clean up old images
             docker image prune -f
           EOF
+
+          # Clean up the temporary key file
+          rm /tmp/droplet_key
+
