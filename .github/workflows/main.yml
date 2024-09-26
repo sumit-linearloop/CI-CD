@@ -9,9 +9,11 @@ env:
   DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
   BUILD_NUMBER: ${{ github.run_number }}
+  DROPLET_IP: 138.197.25.111  # Replace with your DigitalOcean Droplet IP address
+  SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}  # Replace with your DigitalOcean SSH private key secret name
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -43,3 +45,15 @@ jobs:
         run: |
           docker tag sumit-api:latest ${{ env.DOCKER_USERNAME }}/sumit-api:${{ env.BUILD_NUMBER }}
           docker push ${{ env.DOCKER_USERNAME }}/sumit-api:${{ env.BUILD_NUMBER }}
+
+      - name: SSH into Droplet and deploy new Docker container
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ env.DROPLET_IP }}
+          username: root  # Change if your username is different
+          key: ${{ env.SSH_KEY }}
+          script: |
+            docker stop $(docker ps -q --filter ancestor=${{ env.DOCKER_USERNAME }}/sumit-api) || true
+            docker rm $(docker ps -a -q --filter ancestor=${{ env.DOCKER_USERNAME }}/sumit-api) || true
+            docker pull ${{ env.DOCKER_USERNAME }}/sumit-api:latest
+            docker run -d --name sumit-api-container -p 3000:3000 ${{ env.DOCKER_USERNAME }}/sumit-api:latest
