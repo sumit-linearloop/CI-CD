@@ -10,7 +10,7 @@ env:
   DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
   BUILD_NUMBER: ${{ github.run_number }}
   DROPLET_IP: 138.197.25.111  # Replace with your DigitalOcean Droplet IP address
-  SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}  # Replace with your DigitalOcean SSH private key secret name
+  SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}  # Your DigitalOcean SSH private key secret name
 
 jobs:
   build-and-deploy:
@@ -46,3 +46,21 @@ jobs:
           docker tag sumit-api:latest ${{ env.DOCKER_USERNAME }}/sumit-api:${{ env.BUILD_NUMBER }}
           docker push ${{ env.DOCKER_USERNAME }}/sumit-api:${{ env.BUILD_NUMBER }}
 
+      - name: Deploy to DigitalOcean Droplet
+        env:
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}  # Your SSH key for the droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no -i $DROPLET_SSH_KEY root@${{ env.DROPLET_IP }} << 'EOF'
+            # Pull the latest Docker image
+            docker pull ${{ env.DOCKER_USERNAME }}/sumit-api:latest
+            
+            # Stop and remove the old container (if it exists)
+            docker stop sumit || true
+            docker rm sumit || true
+            
+            # Run the new container
+            docker run -d --name sumit -p 3000:3000 ${{ env.DOCKER_USERNAME }}/sumit-api:latest
+            
+            # Optionally, clean up old images
+            docker image prune -f
+          EOF
