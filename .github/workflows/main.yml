@@ -80,7 +80,89 @@
 
 
 
+# name: Main Branch CI/CD Pipeline
+
+# on:
+#   push:  # Automatically triggers CI on code push to the repository
+#     branches:
+#       - main  # Adjust this to the branch you want to monitor
+#   workflow_dispatch:  # Allows manual triggering for CD (no auto execution)
+
+# env:
+#   DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+#   DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+#   BUILD_NUMBER: ${{ github.run_number }}
+#   DROPLET_IP: 64.225.10.215  # Updated DigitalOcean Droplet IP address
+#   SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}  # Your DigitalOcean SSH private key secret name
+
+# jobs:
+#   build-and-push:
+#     runs-on: ubuntu-latest
+#     if: github.event_name == 'push'  # Only run on automatic code pushes
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
+
+#       - name: Login to Docker Hub
+#         uses: docker/login-action@v1
+#         with:
+#           username: ${{ env.DOCKER_USERNAME }}
+#           password: ${{ env.DOCKER_PASSWORD }}
+
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v1
+
+#       - name: Build Docker image
+#         run: |
+#           docker build --no-cache -t sumit-api:latest -f Dockerfile .
+
+#       - name: Tag Docker image with Docker Hub username
+#         run: |
+#           docker tag sumit-api:latest ${{ env.DOCKER_USERNAME }}/sumit-api:latest
+
+#       - name: Push Docker image with 'latest' tag
+#         run: |
+#           docker push ${{ env.DOCKER_USERNAME }}/sumit-api:latest
+
+#       - name: Tag Docker image with build number
+#         run: |
+#           docker tag sumit-api:latest ${{ env.DOCKER_USERNAME }}/sumit-api:${{ env.BUILD_NUMBER }}
+#           docker push ${{ env.DOCKER_USERNAME }}/sumit-api:${{ env.BUILD_NUMBER }}
+
+#   deploy:
+#     name: CD - Manual Deployment
+#     runs-on: ubuntu-latest
+#     if: github.event_name == 'workflow_dispatch'  # Only run when manually triggered
+
+#     steps:
+#       - name: Manual CD Task
+#         run: |
+#           echo "Manual CD task started"
+#           # Add your manual CD operations here (e.g., deployment, tests, etc.)
+
+#       - name: Optional DigitalOcean Deployment
+#         env:
+#           DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+#         run: |
+#           echo "${{ env.DROPLET_SSH_KEY }}" > /tmp/droplet_key
+#           chmod 600 /tmp/droplet_key
+#           ssh -o StrictHostKeyChecking=no -i /tmp/droplet_key root@${{ env.DROPLET_IP }} << 'EOF'
+#             docker pull ${{ env.DOCKER_USERNAME }}/sumit-api:latest
+#             docker stop sumit || true
+#             docker rm sumit || true
+#             docker run -d --name sumit -p 3000:3000 ${{ env.DOCKER_USERNAME }}/sumit-api:latest
+#             docker image prune -f
+#           EOF
+#           rm /tmp/droplet_key
+
+
+
 name: Main Branch CI/CD Pipeline
+
+permissions:
+  contents: read  # Read access to repository contents
+  actions: write  # Write access to actions
 
 on:
   push:  # Automatically triggers CI on code push to the repository
