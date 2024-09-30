@@ -130,9 +130,10 @@ jobs:
           docker tag sumit-api:latest ${{ env.DOCKER_USERNAME }}/sumit-api:${{ env.BUILD_NUMBER }}
           docker push ${{ env.DOCKER_USERNAME }}/sumit-api:${{ env.BUILD_NUMBER }}
 
-  cd-manual:
+  deploy:
+    name: CD - Manual Deployment
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'  # Only run when manually triggered (no automatic execution)
+    if: github.event_name == 'workflow_dispatch'  # Only run when manually triggered
 
     steps:
       - name: Manual CD Task
@@ -140,7 +141,6 @@ jobs:
           echo "Manual CD task started"
           # Add your manual CD operations here (e.g., deployment, tests, etc.)
 
-      # Example of optional deployment task (remove if not needed)
       - name: Optional DigitalOcean Deployment
         env:
           DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
