@@ -94,6 +94,7 @@ env:
   BUILD_NUMBER: ${{ github.run_number }}
   DROPLET_IP: 64.225.10.215  # Updated DigitalOcean Droplet IP address
   SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}  # Your DigitalOcean SSH private key secret name
+  GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }} 
 
 jobs:
   build-and-push:
