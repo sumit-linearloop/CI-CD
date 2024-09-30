@@ -122,34 +122,34 @@ jobs:
           docker tag sumit-api:latest ${{ env.DOCKER_USERNAME }}/sumit-api:${{ env.BUILD_NUMBER }}
           docker push ${{ env.DOCKER_USERNAME }}/sumit-api:${{ env.BUILD_NUMBER }}
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    if: github.event_name == 'workflow_dispatch'  # Only run when manually triggered
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: build-and-push
+  #   if: github.event_name == 'workflow_dispatch'  # Only run when manually triggered
 
-    steps:
-      - name: Deploy to DigitalOcean Droplet
-        env:
-          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}  # Your SSH key for the droplet
-        run: |
-          # Create a temporary SSH key file
-          echo "${{ env.DROPLET_SSH_KEY }}" > /tmp/droplet_key
-          chmod 600 /tmp/droplet_key  # Set the correct permissions
-          # Connect to the DigitalOcean droplet
-          ssh -o StrictHostKeyChecking=no -i /tmp/droplet_key root@${{ env.DROPLET_IP }} << 'EOF'
-            # Pull the latest Docker image
-            docker pull ${{ env.DOCKER_USERNAME }}/sumit-api:latest
+  #   steps:
+  #     - name: Deploy to DigitalOcean Droplet
+  #       env:
+  #         DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}  # Your SSH key for the droplet
+  #       run: |
+  #         # Create a temporary SSH key file
+  #         echo "${{ env.DROPLET_SSH_KEY }}" > /tmp/droplet_key
+  #         chmod 600 /tmp/droplet_key  # Set the correct permissions
+  #         # Connect to the DigitalOcean droplet
+  #         ssh -o StrictHostKeyChecking=no -i /tmp/droplet_key root@${{ env.DROPLET_IP }} << 'EOF'
+  #           # Pull the latest Docker image
+  #           docker pull ${{ env.DOCKER_USERNAME }}/sumit-api:latest
             
-            # Stop and remove the old container (if it exists)
-            docker stop sumit || true
-            docker rm sumit || true
+  #           # Stop and remove the old container (if it exists)
+  #           docker stop sumit || true
+  #           docker rm sumit || true
             
-            # Run the new container
-            docker run -d --name sumit -p 3000:3000 ${{ env.DOCKER_USERNAME }}/sumit-api:latest
+  #           # Run the new container
+  #           docker run -d --name sumit -p 3000:3000 ${{ env.DOCKER_USERNAME }}/sumit-api:latest
             
-            # Optionally, clean up old images
-            docker image prune -f
-          EOF
-          # Clean up the temporary key file
-          rm /tmp/droplet_key
+  #           # Optionally, clean up old images
+  #           docker image prune -f
+  #         EOF
+  #         # Clean up the temporary key file
+  #         rm /tmp/droplet_key
 
