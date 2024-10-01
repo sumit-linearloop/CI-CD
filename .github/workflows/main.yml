@@ -160,33 +160,27 @@
 
 name: Main Branch CI/CD Pipeline
 
-permissions:
-  contents: read  # Read access to repository contents
-  actions: write  # Write access to actions
-
 on:
-  push:  # Automatically triggers CI on code push to the repository
+  push:
     branches:
-      - main  # Adjust this to the branch you want to monitor
-  workflow_dispatch:  # Allows manual triggering for CD (no auto execution)
+      - main
+  workflow_dispatch:
 
 env:
   DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
   BUILD_NUMBER: ${{ github.run_number }}
-  DROPLET_IP: 64.225.10.215  # Updated DigitalOcean Droplet IP address
-  SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}  # Your DigitalOcean SSH private key secret name
+  DROPLET_IP: 64.225.10.215
+  SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'  # Only run on automatic code pushes
+    if: github.event_name == 'push'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        with:
-          token: ${{ env.GH_TOKEN }}  # Use the GitHub token for checkout
 
       - name: Login to Docker Hub
         uses: docker/login-action@v1
@@ -199,7 +193,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build --no-cache -t sumit-api:latest -f Dockerfile .
+          DOCKER_BUILDKIT=1 docker build --no-cache -t sumit-api:latest -f Dockerfile .
 
       - name: Tag Docker image with Docker Hub username
         run: |
@@ -217,29 +211,20 @@ jobs:
   deploy:
     name: CD - Manual Deployment
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'  # Only run when manually triggered
+    if: github.event_name == 'workflow_dispatch'
 
     steps:
-      - name: Manual CD Task
-        run: |
-          echo "Manual CD task started"
-          # Add your manual CD operations here (e.g., deployment, tests, etc.)
+      - name: Install SSH Key for DigitalOcean Droplet
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
 
-      - name: Debug Info
+      - name: Deploy to DigitalOcean Droplet
         run: |
-          echo "This is a manual deployment step"
-
-      - name: Optional DigitalOcean Deployment
-        env:
-          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
-        run: |
-          echo "${{ env.DROPLET_SSH_KEY }}" > /tmp/droplet_key
-          chmod 600 /tmp/droplet_key
-          ssh -o StrictHostKeyChecking=no -i /tmp/droplet_key root@${{ env.DROPLET_IP }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no root@${{ env.DROPLET_IP }} << 'EOF'
             docker pull ${{ env.DOCKER_USERNAME }}/sumit-api:latest
             docker stop sumit || true
             docker rm sumit || true
             docker run -d --name sumit -p 3000:3000 ${{ env.DOCKER_USERNAME }}/sumit-api:latest
-            docker image prune -f
+            docker image prune --all --force
           EOF
-          rm /tmp/droplet_key
