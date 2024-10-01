@@ -176,7 +176,6 @@ env:
   BUILD_NUMBER: ${{ github.run_number }}
   DROPLET_IP: 64.225.10.215  # Updated DigitalOcean Droplet IP address
   SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}  # Your DigitalOcean SSH private key secret name
-  GH_TOKEN: ${{ secrets.GH_TOKEN }}  # GitHub token for additional permissions
 
 jobs:
   build-and-push:
@@ -233,7 +232,6 @@ jobs:
       - name: Optional DigitalOcean Deployment
         env:
           DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}  # Add GitHub token for deployment
         run: |
           echo "${{ env.DROPLET_SSH_KEY }}" > /tmp/droplet_key
           chmod 600 /tmp/droplet_key
