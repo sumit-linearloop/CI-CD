@@ -163,14 +163,14 @@ name: Main Branch CI/CD Pipeline
 on:
   push:
     branches:
-      - main
+      - devops
   workflow_dispatch:
 
 env:
   DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
   BUILD_NUMBER: ${{ github.run_number }}
-  DROPLET_IP: 167.99.114.225
+  DROPLET_IP: 68.183.149.192
   SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
 
 jobs:
