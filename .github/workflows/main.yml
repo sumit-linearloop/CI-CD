@@ -170,7 +170,7 @@ env:
   DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
   BUILD_NUMBER: ${{ github.run_number }}
-  # DROPLET_IP: 68.183.149.192
+  DROPLET_IP: 138.197.25.80
   SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
 
 jobs:
@@ -208,23 +208,23 @@ jobs:
           docker tag sumit-api:latest ${{ env.DOCKER_USERNAME }}/sumit-api:${{ env.BUILD_NUMBER }}
           docker push ${{ env.DOCKER_USERNAME }}/sumit-api:${{ env.BUILD_NUMBER }}
 
-  # deploy:
-  #   name: CD - Manual Deployment
-  #   runs-on: ubuntu-latest
-  #   if: github.event_name == 'workflow_dispatch'
+  deploy:
+    name: CD - Manual Deployment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
 
-  #   steps:
-  #     - name: Install SSH Key for DigitalOcean Droplet
-  #       uses: webfactory/ssh-agent@v0.5.3
-  #       with:
-  #         ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
+    steps:
+      - name: Install SSH Key for DigitalOcean Droplet
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
 
-  #     - name: Deploy to DigitalOcean Droplet
-  #       run: |
-  #         ssh -o StrictHostKeyChecking=no root@${{ env.DROPLET_IP }} << 'EOF'
-  #           docker pull ${{ env.DOCKER_USERNAME }}/sumit-api:latest
-  #           docker stop sumit || true
-  #           docker rm sumit || true
-  #           docker run -d --name sumit -p 3000:3000 ${{ env.DOCKER_USERNAME }}/sumit-api:latest
-  #           docker image prune --all --force
-  #         EOF
+      - name: Deploy to DigitalOcean Droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no root@${{ env.DROPLET_IP }} << 'EOF'
+            docker pull ${{ env.DOCKER_USERNAME }}/sumit-api:latest
+            docker stop sumit || true
+            docker rm sumit || true
+            docker run -d --name sumit -p 3000:3000 ${{ env.DOCKER_USERNAME }}/sumit-api:latest
+            docker image prune --all --force
+          EOF
